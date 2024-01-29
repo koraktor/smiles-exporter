@@ -31,7 +31,7 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	plantIds := getPlantIds()
 
 	for _, plantId := range plantIds {
-		plant := getSolarData(plantId)
+		plant := getPlantData(plantId)
 
 		lastUpdate := plant["last_data_time"].(string)
 		plantPower, _ := strconv.ParseFloat(plant["real_power"].(string), 64)
