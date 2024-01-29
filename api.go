@@ -28,11 +28,7 @@ func getPlantIds() []int {
 		"page_size": 100,
 	}
 
-	headers := map[string]string{
-		"Cookie": fmt.Sprintf("hm_token=%s", token),
-	}
-
-	plantsData := post(PvmStationsDataPath, headers, data)
+	plantsData := post(PvmStationsDataPath, data)
 
 	var plantIds []int
 	for _, plantData := range plantsData["list"].([]interface{}) {
@@ -48,11 +44,7 @@ func getPlantData(plantId int) map[string]interface{} {
 		"sid": plantId,
 	}
 
-	headers := map[string]string{
-		"Cookie": fmt.Sprintf("hm_token=%s", token),
-	}
-
-	return post(PvmStationDataPath, headers, data)
+	return post(PvmStationDataPath, data)
 }
 
 func login(username string, password string) {
@@ -61,18 +53,21 @@ func login(username string, password string) {
 		"user_name": username,
 	}
 
-	headers := map[string]string{
-		"Cookie": "hm_token_language=en_us",
-	}
-
-	res := post(LoginPath, headers, data)
+	res := post(LoginPath, data)
 
 	token = res["token"].(string)
 
 	log.Printf("Acquired token: %s", token)
 }
 
-func post(path string, headers map[string]string, data map[string]interface{}) map[string]interface{} {
+func post(path string, data map[string]interface{}) map[string]interface{} {
+	headers := map[string]string{}
+	if path == LoginPath {
+		headers["Cookie"] = "hm_token_language=en_us"
+	} else {
+		headers["Cookie"] = fmt.Sprintf("hm_token=%s", token)
+	}
+
 	jsonBody, err := json.Marshal(map[string]interface{}{
 		"body": data,
 	})
