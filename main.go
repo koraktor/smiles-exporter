@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var addr = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
+var addr = flag.String("listen-address", ":9776", "The address to listen on for HTTP requests.")
 var enableRuntimeMetrics = flag.Bool("runtime-metrics", false, "Enable prometheus runtime metrics.")
 var password = flag.String("password", "", "The password used for logging into S-Miles Cloud.")
 var username = flag.String("username", "", "The username used for logging into S-Miles Cloud.")
