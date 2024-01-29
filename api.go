@@ -48,6 +48,12 @@ func getPlantData(plantId int) map[string]interface{} {
 }
 
 func login(username string, password string) {
+	if token != "" {
+		log.Printf("Re-using cached token: %s", token)
+
+		return
+	}
+
 	data := map[string]interface{}{
 		"password":  fmt.Sprintf("%x", md5.Sum([]byte(password))),
 		"user_name": username,
@@ -93,7 +99,7 @@ func post(path string, data map[string]interface{}) map[string]interface{} {
 		log.Fatalf("Error sending HTTP request: %s\n", err)
 	}
 
-	log.Printf("<- %s (%d bytes)", res.Status, res.ContentLength)
+	log.Printf("<- HTTP %s (%d bytes)", res.Status, res.ContentLength)
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -107,8 +113,20 @@ func post(path string, data map[string]interface{}) map[string]interface{} {
 	}
 
 	status := result["status"].(string)
-	if status != "0" {
-		msg := result["message"].(string)
+	msg := result["message"].(string)
+
+	log.Printf("<- API %s (%s)", status, msg)
+
+	switch status {
+	case "0":
+		break
+	case "100":
+		token = ""
+		log.Printf("Token invalidated")
+
+		login(*username, *password)
+		return post(path, data)
+	default:
 		log.Fatalf("-> API error: %s (%s)", msg, status)
 	}
 
