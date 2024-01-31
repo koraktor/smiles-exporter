@@ -22,29 +22,27 @@ var client = http.Client{
 
 var token = ""
 
-func getPlantIds() []int {
+func getPlants() []plantInfo {
 	data := map[string]interface{}{
 		"page":      1,
 		"page_size": 100,
 	}
 
-	plantsData := post(PvmStationsDataPath, data)
+	var result *plantsData
+	res := post(PvmStationsDataPath, data, result)
 
-	var plantIds []int
-	for _, plantData := range plantsData["list"].([]interface{}) {
-		rawId := plantData.(map[string]interface{})["id"].(float64)
-		plantIds = append(plantIds, int(rawId))
-	}
-
-	return plantIds
+	return res.Data.List
 }
 
-func getPlantData(plantId int) map[string]interface{} {
+func getPlantData(plantId float64) plantData {
 	data := map[string]interface{}{
 		"sid": plantId,
 	}
 
-	return post(PvmStationDataPath, data)
+	var result *plantData
+	res := post(PvmStationDataPath, data, result)
+
+	return res
 }
 
 func login(username string, password string) {
@@ -59,14 +57,14 @@ func login(username string, password string) {
 		"user_name": username,
 	}
 
-	res := post(LoginPath, data)
-
-	token = res["token"].(string)
+	var result *loginData
+	res := post(LoginPath, data, result)
+	token = res.Data.Token
 
 	log.Printf("Acquired token: %s", token)
 }
 
-func post(path string, data map[string]interface{}) map[string]interface{} {
+func post[T response](path string, data map[string]interface{}, result *T) T {
 	headers := map[string]string{}
 	if path == LoginPath {
 		headers["Cookie"] = "hm_token_language=en_us"
@@ -106,14 +104,13 @@ func post(path string, data map[string]interface{}) map[string]interface{} {
 		log.Fatalf("Error reading HTTP response body: %s\n", err)
 	}
 
-	result := map[string]interface{}{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		log.Fatalf("Error unmarshalling JSON response body: %s\n", err)
 	}
 
-	status := result["status"].(string)
-	msg := result["message"].(string)
+	status := (*result).ApiStatus()
+	msg := (*result).ApiMessage()
 
 	log.Printf("<- API %s (%s)", status, msg)
 
@@ -125,10 +122,10 @@ func post(path string, data map[string]interface{}) map[string]interface{} {
 		log.Printf("Token invalidated")
 
 		login(*username, *password)
-		return post(path, data)
+		return post(path, data, result)
 	default:
 		log.Fatalf("-> API error: %s (%s)", msg, status)
 	}
 
-	return result["data"].(map[string]interface{})
+	return *result
 }

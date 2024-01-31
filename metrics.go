@@ -28,16 +28,16 @@ func newMetrics() metrics {
 
 func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	login(*username, *password)
-	plantIds := getPlantIds()
+	plantInfo := getPlants()
 
-	for _, plantId := range plantIds {
-		plant := getPlantData(plantId)
+	for _, plant := range plantInfo {
+		plantData := getPlantData(plant.Id)
 
-		lastUpdate := plant["last_data_time"].(string)
-		plantPower, _ := strconv.ParseFloat(plant["real_power"].(string), 64)
+		lastUpdate := plantData.Data.LastDataTime
+		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
-		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%d", plantId), lastUpdate)
-		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%d", plantId))
+		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%d", int(plant.Id)), lastUpdate)
+		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%d", int(plant.Id)))
 	}
 }
 
