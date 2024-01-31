@@ -17,7 +17,7 @@ func newMetrics() metrics {
 		plantInfo: prometheus.NewDesc(
 			"plant_info",
 			"Basic information about the monitored plant",
-			[]string{"plant_id", "last_update"}, nil),
+			[]string{"plant_id", "name", "last_update"}, nil),
 
 		plantPower: prometheus.NewDesc(
 			"plant_power",
@@ -36,7 +36,7 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		lastUpdate := plantData.Data.LastDataTime
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
-		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%d", int(plant.Id)), lastUpdate)
+		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%d", int(plant.Id)), plant.Name, lastUpdate)
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%d", int(plant.Id)))
 	}
 }
