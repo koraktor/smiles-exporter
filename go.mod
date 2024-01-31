@@ -1,4 +1,4 @@
-module github.com/koraktor/smiles_exporter
+module github.com/koraktor/smiles-exporter
 
 go 1.21
 
