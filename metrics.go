@@ -8,12 +8,18 @@ import (
 )
 
 type metrics struct {
-	plantInfo  *prometheus.Desc
-	plantPower *prometheus.Desc
+	plantEnergyTotal *prometheus.Desc
+	plantInfo        *prometheus.Desc
+	plantPower       *prometheus.Desc
 }
 
 func newMetrics() metrics {
 	return metrics{
+		plantEnergyTotal: prometheus.NewDesc(
+			"smiles_plant_energy_total",
+			"Total energy produced by a monitored plant",
+			[]string{"plant_id"}, nil),
+
 		plantInfo: prometheus.NewDesc(
 			"smiles_plant_info",
 			"Basic information about the monitored plant",
@@ -33,11 +39,14 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	for _, plant := range plantInfo {
 		plantData := getPlantData(plant.Id)
 
+		energyToday, _ := strconv.ParseFloat(plantData.Data.EnergyToday, 64)
+		energyTotal, _ := strconv.ParseFloat(plantData.Data.EnergyTotal, 64)
 		maxPower, _ := strconv.ParseFloat(plantData.Data.MaxPower, 64)
 		maxPower *= 1000
 		lastUpdate := plantData.Data.LastDataTime
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
+		ch <- prometheus.MustNewConstMetric(m.plantEnergyTotal, prometheus.CounterValue, energyTotal+energyToday, fmt.Sprintf("%.0f", plant.Id))
 		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate, fmt.Sprintf("%.0f", maxPower))
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%.0f", plant.Id))
 	}

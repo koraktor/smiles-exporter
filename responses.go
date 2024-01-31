@@ -36,6 +36,8 @@ type plantData struct {
 	baseResponse
 	Data struct {
 		MaxPower     string `json:"capacitor"`
+		EnergyToday  string `json:"today_eq"`
+		EnergyTotal  string `json:"total_eq"`
 		LastDataTime string `json:"last_data_time"`
 		RealPower    string `json:"real_power"`
 	}
