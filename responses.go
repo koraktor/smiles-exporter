@@ -35,6 +35,7 @@ type loginData struct {
 type plantData struct {
 	baseResponse
 	Data struct {
+		MaxPower     string `json:"capacitor"`
 		LastDataTime string `json:"last_data_time"`
 		RealPower    string `json:"real_power"`
 	}
