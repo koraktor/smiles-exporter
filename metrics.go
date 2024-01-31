@@ -15,12 +15,12 @@ type metrics struct {
 func newMetrics() metrics {
 	return metrics{
 		plantInfo: prometheus.NewDesc(
-			"plant_info",
+			"smiles_plant_info",
 			"Basic information about the monitored plant",
 			[]string{"plant_id", "name", "last_update", "max_power"}, nil),
 
 		plantPower: prometheus.NewDesc(
-			"plant_power",
+			"smiles_plant_power",
 			"Current power produced by the monitored plant",
 			[]string{"plant_id"}, nil),
 	}
