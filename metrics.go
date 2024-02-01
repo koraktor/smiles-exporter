@@ -2,18 +2,16 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var timeZoneRegex = regexp.MustCompile("UTC([+-])(\\d{2})")
-
 type metrics struct {
 	plantEnergyTotal *prometheus.Desc
 	plantInfo        *prometheus.Desc
+	plantLastUpdate  *prometheus.Desc
 	plantPower       *prometheus.Desc
 }
 
@@ -27,7 +25,12 @@ func newMetrics() metrics {
 		plantInfo: prometheus.NewDesc(
 			"smiles_plant_info",
 			"Basic information about the monitored plant",
-			[]string{"plant_id", "name", "last_update", "max_power"}, nil),
+			[]string{"plant_id", "name", "max_power"}, nil),
+
+		plantLastUpdate: prometheus.NewDesc(
+			"smiles_plant_last_update",
+			"Last time a plant sent a status update to S-Miles Cloud",
+			[]string{"plant_id"}, nil),
 
 		plantPower: prometheus.NewDesc(
 			"smiles_plant_power",
@@ -48,19 +51,13 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		maxPower, _ := strconv.ParseFloat(plantData.Data.MaxPower, 64)
 		maxPower *= 1000
 
-		timeZone := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)[0]
-		timeZoneNegative := timeZone[1] == "-"
-		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 64)
-		if timeZoneNegative {
-			timeZoneOffset *= -1
-		}
+		lastUpdate, _ := time.Parse(time.DateTime, plantData.Data.LastDataTime)
 
-		location := time.FixedZone(plant.TimeZone, int(timeZoneOffset)*3600)
-		lastUpdate, _ := time.ParseInLocation(time.DateTime, plantData.Data.LastDataTime, location)
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
 		ch <- prometheus.MustNewConstMetric(m.plantEnergyTotal, prometheus.CounterValue, energyTotal+energyToday, fmt.Sprintf("%.0f", plant.Id))
-		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate.UTC().Format(time.RFC3339), fmt.Sprintf("%.0f", maxPower))
+		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, fmt.Sprintf("%.0f", maxPower))
+		ch <- prometheus.MustNewConstMetric(m.plantLastUpdate, prometheus.CounterValue, float64(lastUpdate.UTC().Unix()), fmt.Sprintf("%.0f", plant.Id))
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%.0f", plant.Id))
 	}
 }
