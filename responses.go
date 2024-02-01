@@ -44,8 +44,9 @@ type plantData struct {
 }
 
 type plantInfo struct {
-	Id   float64
-	Name string
+	Id       float64
+	Name     string
+	TimeZone string `json:"tz_name"`
 }
 
 type plantsData struct {

@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var timeZoneRegex = regexp.MustCompile("UTC([+-])(\\d{2})")
 
 type metrics struct {
 	plantEnergyTotal *prometheus.Desc
@@ -43,11 +47,20 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		energyTotal, _ := strconv.ParseFloat(plantData.Data.EnergyTotal, 64)
 		maxPower, _ := strconv.ParseFloat(plantData.Data.MaxPower, 64)
 		maxPower *= 1000
-		lastUpdate := plantData.Data.LastDataTime
+
+		timeZone := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)[0]
+		timeZoneNegative := timeZone[1] == "-"
+		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 64)
+		if timeZoneNegative {
+			timeZoneOffset *= -1
+		}
+
+		location := time.FixedZone(plant.TimeZone, int(timeZoneOffset)*3600)
+		lastUpdate, _ := time.ParseInLocation(time.DateTime, plantData.Data.LastDataTime, location)
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
 		ch <- prometheus.MustNewConstMetric(m.plantEnergyTotal, prometheus.CounterValue, energyTotal+energyToday, fmt.Sprintf("%.0f", plant.Id))
-		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate, fmt.Sprintf("%.0f", maxPower))
+		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate.Format(time.RFC3339), fmt.Sprintf("%.0f", maxPower))
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%.0f", plant.Id))
 	}
 }
