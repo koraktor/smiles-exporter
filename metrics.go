@@ -60,7 +60,7 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
 		ch <- prometheus.MustNewConstMetric(m.plantEnergyTotal, prometheus.CounterValue, energyTotal+energyToday, fmt.Sprintf("%.0f", plant.Id))
-		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate.Format(time.RFC3339), fmt.Sprintf("%.0f", maxPower))
+		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, lastUpdate.UTC().Format(time.RFC3339), fmt.Sprintf("%.0f", maxPower))
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%.0f", plant.Id))
 	}
 }
