@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -14,6 +15,8 @@ type metrics struct {
 	plantLastUpdate  *prometheus.Desc
 	plantPower       *prometheus.Desc
 }
+
+var timeZoneRegex = regexp.MustCompile("UTC([+-])(\\d{2})")
 
 var collectorLog = log.Sugar().Named("collector")
 
@@ -57,7 +60,15 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		maxPower, _ := strconv.ParseFloat(plantData.Data.MaxPower, 64)
 		maxPower *= 1000
 
-		lastUpdate, _ := time.Parse(time.DateTime, plantData.Data.LastDataTime)
+		timeZone := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)[0]
+		timeZoneNegative := timeZone[1] == "-"
+		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 64)
+		if timeZoneNegative {
+			timeZoneOffset *= -1
+		}
+
+		location := time.FixedZone(plant.TimeZone, int(timeZoneOffset)*3600)
+		lastUpdate, _ := time.ParseInLocation(time.DateTime, plantData.Data.LastDataTime, location)
 
 		plantPower, _ := strconv.ParseFloat(plantData.Data.RealPower, 64)
 
