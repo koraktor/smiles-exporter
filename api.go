@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -16,13 +15,17 @@ const LoginPath = "iam/auth_login"
 const PvmStationDataPath = "pvm-data/data_count_station_real_data"
 const PvmStationsDataPath = "pvm/station_select_by_page"
 
+
+var apiLog = log.Sugar().Named("api")
 var client = http.Client{
 	Timeout: 30 * time.Second,
 }
-
+var httpLog = log.Sugar().Named("http")
 var token = ""
 
 func getPlants() []plantInfo {
+	apiLog.Debug("Querying plant information …")
+
 	data := map[string]interface{}{
 		"page":      1,
 		"page_size": 100,
@@ -35,6 +38,8 @@ func getPlants() []plantInfo {
 }
 
 func getPlantData(plantId float64) plantData {
+	apiLog.Debug("Querying plant data …")
+
 	data := map[string]interface{}{
 		"sid": plantId,
 	}
@@ -47,10 +52,12 @@ func getPlantData(plantId float64) plantData {
 
 func login(username string, password string) {
 	if token != "" {
-		log.Printf("Re-using cached token: %s", token)
+		apiLog.Debugf("Re-using cached token: %s", token)
 
 		return
 	}
+
+	apiLog.Debug("Authenticating with username and password …")
 
 	data := map[string]interface{}{
 		"password":  fmt.Sprintf("%x", md5.Sum([]byte(password))),
@@ -61,7 +68,7 @@ func login(username string, password string) {
 	res := post(LoginPath, data, result)
 	token = res.Data.Token
 
-	log.Printf("Acquired token: %s", token)
+	apiLog.Debugf("Acquired token: %s", token)
 }
 
 func post[T response](path string, data map[string]interface{}, result *T) T {
@@ -76,15 +83,16 @@ func post[T response](path string, data map[string]interface{}, result *T) T {
 		"body": data,
 	})
 	if err != nil {
-		log.Fatalf("Error marshalling JSON request body: %s", err.Error())
+		apiLog.Fatalf("Error marshalling JSON request body: %s", err.Error())
 	}
 
-	log.Printf("-> %s (%d bytes)", path, len(jsonBody))
+	apiLog.Debugf("-> %s", jsonBody)
+	httpLog.Debugf("-> %s (%d bytes)", path, len(jsonBody))
 
 	bodyReader := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest(http.MethodPost, BaseUrl+path, bodyReader)
 	if err != nil {
-		log.Fatalf("Error creating HTTP request: %s\n", err.Error())
+		apiLog.Fatalf("Error creating HTTP request: %s\n", err.Error())
 	}
 
 	req.Header.Set("Content-Type", "application/json;charset=utf-8")
@@ -94,37 +102,37 @@ func post[T response](path string, data map[string]interface{}, result *T) T {
 
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error sending HTTP request: %s\n", err)
+		httpLog.Errorf("Error sending HTTP request: %s", err)
 	}
 
-	log.Printf("<- HTTP %s (%d bytes)", res.Status, res.ContentLength)
+	httpLog.Debugf("<- HTTP %s (%d bytes)", res.Status, res.ContentLength)
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalf("Error reading HTTP response body: %s\n", err)
+		httpLog.Errorf("Error reading HTTP response body: %s", err)
 	}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		log.Fatalf("Error unmarshalling JSON response body: %s\n", err)
+		apiLog.Errorf("Error unmarshalling JSON response body: %s", err)
 	}
 
 	status := (*result).ApiStatus()
 	msg := (*result).ApiMessage()
 
-	log.Printf("<- API %s (%s)", status, msg)
+	apiLog.Debugf("<- API status code %s (%s)", status, msg)
 
 	switch status {
 	case "0":
 		break
 	case "100":
 		token = ""
-		log.Printf("Token invalidated")
+		apiLog.Debug("Token invalidated")
 
 		login(*username, *password)
 		return post(path, data, result)
 	default:
-		log.Fatalf("-> API error: %s (%s)", msg, status)
+		apiLog.Errorf("-> API error (%s): %s", status, msg)
 	}
 
 	return *result

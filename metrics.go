@@ -15,6 +15,8 @@ type metrics struct {
 	plantPower       *prometheus.Desc
 }
 
+var collectorLog = log.Sugar().Named("collector")
+
 func newMetrics() metrics {
 	return metrics{
 		plantEnergyTotal: prometheus.NewDesc(
@@ -40,10 +42,14 @@ func newMetrics() metrics {
 }
 
 func (m metrics) Collect(ch chan<- prometheus.Metric) {
+	collectorLog.Debug("Collecting metrics …")
+
 	login(*username, *password)
 	plantInfo := getPlants()
 
 	for _, plant := range plantInfo {
+		collectorLog.Debugf("Building metrics for plant ID %0.f …", plant.Id)
+
 		plantData := getPlantData(plant.Id)
 
 		energyToday, _ := strconv.ParseFloat(plantData.Data.EnergyToday, 64)
