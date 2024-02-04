@@ -63,10 +63,13 @@ func main() {
 
 	mainLog.Infof("Listening for HTTP requests on %s …", *addr)
 
+	prometheusLog, _ := zap.NewStdLogAt(log.Named("prometheus"), zap.ErrorLevel)
+
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
 		reg,
 		promhttp.HandlerOpts{
+			ErrorLog: prometheusLog,
 			// Opt into OpenMetrics to support exemplars.
 			EnableOpenMetrics: true,
 		},
