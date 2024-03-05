@@ -62,7 +62,7 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 
 		timeZone := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)[0]
 		timeZoneNegative := timeZone[1] == "-"
-		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 64)
+		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 32)
 		if timeZoneNegative {
 			timeZoneOffset *= -1
 		}
