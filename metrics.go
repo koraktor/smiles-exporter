@@ -60,11 +60,15 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		maxPower, _ := strconv.ParseFloat(plantData.Data.MaxPower, 64)
 		maxPower *= 1000
 
-		timeZone := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)[0]
-		timeZoneNegative := timeZone[1] == "-"
-		timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 32)
-		if timeZoneNegative {
-			timeZoneOffset *= -1
+		timeZoneOffset := 0
+		timeZoneResult := timeZoneRegex.FindAllStringSubmatch(plant.TimeZone, 1)
+		if len(timeZoneResult) > 0 {
+			timeZone := timeZoneResult[0]
+			timeZoneNegative := timeZone[1] == "-"
+			timeZoneOffset, _ := strconv.ParseInt(timeZone[2], 10, 32)
+			if timeZoneNegative {
+				timeZoneOffset *= -1
+			}
 		}
 
 		location := time.FixedZone(plant.TimeZone, int(timeZoneOffset)*3600)
