@@ -14,10 +14,11 @@ RUN apk upgrade --no-cache
 
 LABEL authors="koraktor"
 
-ENV USERNAME username
-ENV PASSWORD password
+ENV LOG_LEVEL=warn
+ENV USERNAME=username
+ENV PASSWORD=password
 
 COPY --from=builder /build/${OS}-${ARCH}/smiles_exporter /bin/smiles_exporter
 
 EXPOSE 9776
-ENTRYPOINT /bin/smiles_exporter --username=${USERNAME} --password=${PASSWORD}
+ENTRYPOINT /bin/smiles_exporter --username=${USERNAME} --password=${PASSWORD} --log-level=${LOG_LEVEL}
