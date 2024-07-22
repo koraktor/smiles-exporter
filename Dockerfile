@@ -10,6 +10,8 @@ ARG ARCH="amd64"
 ARG OS="linux"
 FROM golang:alpine3.20
 
+RUN apk upgrade --no-cache
+
 LABEL authors="koraktor"
 
 ENV USERNAME username
