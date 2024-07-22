@@ -16,7 +16,7 @@ type metrics struct {
 	plantPower       *prometheus.Desc
 }
 
-var timeZoneRegex = regexp.MustCompile("UTC([+-])(\\d{2})")
+var timeZoneRegex = regexp.MustCompile(`UTC([+-])(\d{2})`)
 
 var collectorLog = log.Sugar().Named("collector")
 
