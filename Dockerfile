@@ -1,6 +1,6 @@
 ARG ARCH="amd64"
 ARG OS="linux"
-FROM golang:alpine3.20 as builder
+FROM golang:alpine3.20 AS builder
 
 WORKDIR /src
 COPY ./. ./
@@ -21,4 +21,4 @@ ENV PASSWORD=password
 COPY --from=builder /build/${OS}-${ARCH}/smiles_exporter /bin/smiles_exporter
 
 EXPOSE 9776
-ENTRYPOINT /bin/smiles_exporter --username=${USERNAME} --password=${PASSWORD} --log-level=${LOG_LEVEL}
+ENTRYPOINT [ "/bin/smiles_exporter", "--username=${USERNAME}", "--password=${PASSWORD}", "--log-level=${LOG_LEVEL}" ]
