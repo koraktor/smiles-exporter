@@ -17,4 +17,4 @@ LABEL authors="koraktor"
 COPY --from=builder /build/${OS}-${ARCH}/smiles_exporter /bin/smiles_exporter
 
 EXPOSE 9776
-ENTRYPOINT [ "/bin/sh", "-c", "/bin/smiles_exporter --username=${USERNAME} --password=${PASSWORD} --log-level=${LOG_LEVEL}" ]
+ENTRYPOINT [ "/bin/sh", "-c", "/bin/smiles_exporter --username=${USERNAME} --password=${PASSWORD} --log-level=${LOG_LEVEL} ${*}", "entrypoint" ]
