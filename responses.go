@@ -27,9 +27,7 @@ type deviceData struct {
 
 type loginData struct {
 	baseResponse
-	Data struct {
-		Token string
-	}
+	Data interface{}
 }
 
 type plantData struct {

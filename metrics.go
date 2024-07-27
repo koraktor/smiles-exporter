@@ -47,7 +47,11 @@ func newMetrics() metrics {
 func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	collectorLog.Debug("Collecting metrics …")
 
-	login(*username, *password)
+	err := login(*username, *password)
+	if err != nil {
+		return
+	}
+
 	plantInfo := getPlants()
 
 	for _, plant := range plantInfo {
