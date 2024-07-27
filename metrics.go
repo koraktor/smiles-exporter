@@ -14,6 +14,7 @@ type metrics struct {
 	plantInfo        *prometheus.Desc
 	plantLastUpdate  *prometheus.Desc
 	plantPower       *prometheus.Desc
+	up               *prometheus.Desc
 }
 
 var timeZoneRegex = regexp.MustCompile(`UTC([+-])(\d{2})`)
@@ -41,6 +42,11 @@ func newMetrics() metrics {
 			"smiles_plant_power",
 			"Current power produced by the monitored plant",
 			[]string{"plant_id"}, nil),
+
+		up: prometheus.NewDesc(
+			"smiles_up",
+			"The status of the exporter (0 means there was a problem scraping S-Miles Cloud, see logs)",
+			[]string{}, nil),
 	}
 }
 
@@ -48,7 +54,10 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	collectorLog.Debug("Collecting metrics …")
 
 	err := login(*username, *password)
-	if err != nil {
+	if err == nil {
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.CounterValue, 1)
+	} else {
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.CounterValue, 0)
 		return
 	}
 
