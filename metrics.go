@@ -55,9 +55,9 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 
 	err := login(*username, *password)
 	if err == nil {
-		ch <- prometheus.MustNewConstMetric(m.up, prometheus.CounterValue, 1)
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 1)
 	} else {
-		ch <- prometheus.MustNewConstMetric(m.up, prometheus.CounterValue, 0)
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 0)
 		return
 	}
 
