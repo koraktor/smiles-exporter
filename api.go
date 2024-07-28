@@ -37,7 +37,7 @@ func getPlants() []plantInfo {
 }
 
 func getPlantData(plantId float64) plantData {
-	apiLog.Info("Querying data for plant ID %0.f …", plantId)
+	apiLog.Infof("Querying data for plant ID %0.f …", plantId)
 
 	data := map[string]interface{}{
 		"sid": plantId,
