@@ -1,6 +1,6 @@
 ARG ARCH="amd64"
 ARG OS="linux"
-FROM golang:alpine3.20 AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /src
 COPY ./. ./
@@ -8,7 +8,7 @@ RUN go build -o /build/${OS}-${ARCH}/smiles_exporter
 
 ARG ARCH="amd64"
 ARG OS="linux"
-FROM golang:alpine3.20
+FROM golang:1.23-alpine
 
 RUN apk upgrade --no-cache
 
