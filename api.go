@@ -123,6 +123,11 @@ func post[T response](path string, data map[string]interface{}, result *T) (*T, 
 		return nil, err
 	}
 
+	if res.StatusCode == http.StatusNotFound {
+		httpLog.Errorf("API endpoint not found: %s", req.URL)
+		return nil, fmt.Errorf("API endpoint not found: %s", req.URL)
+	}
+
 	httpLog.Debugf("<- HTTP %s (%d bytes)", res.Status, res.ContentLength)
 
 	body, err := io.ReadAll(res.Body)
