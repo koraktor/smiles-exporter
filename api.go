@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,10 +12,10 @@ import (
 	"time"
 )
 
-const BaseUrl = "https://global.hoymiles.com/platform/api/gateway/"
-const LoginPath = "iam/auth_login"
-const PvmStationDataPath = "pvm-data/data_count_station_real_data"
-const PvmStationsDataPath = "pvm/station_select_by_page"
+const BaseUrl = "https://neapi.hoymiles.com/"
+const LoginPath = "iam/pub/0/auth/login"
+const PvmStationDataPath = "pvm-data/api/0/station/data/count_station_real_data"
+const PvmStationsDataPath = "pvm/api/0/station/select_by_page"
 
 var apiLog = log.Sugar().Named("api")
 var client = http.Client{
@@ -58,8 +60,10 @@ func login(username string, password string) error {
 
 	apiLog.Info("Authenticating with username and password …")
 
+	sha256Password := sha256.Sum256([]byte(password))
+	encPassword := fmt.Sprintf("%x", md5.Sum([]byte(password))) + "." + base64.StdEncoding.EncodeToString(sha256Password[:])
 	data := map[string]interface{}{
-		"password":  fmt.Sprintf("%x", md5.Sum([]byte(password))),
+		"password":  encPassword,
 		"user_name": username,
 	}
 
@@ -89,15 +93,11 @@ func login(username string, password string) error {
 
 func post[T response](path string, data map[string]interface{}, result *T) (*T, error) {
 	headers := map[string]string{}
-	if path == LoginPath {
-		headers["Cookie"] = "hm_token_language=en_us"
-	} else {
-		headers["Cookie"] = fmt.Sprintf("hm_token=%s", token)
+	if path != LoginPath {
+		headers["Authorization"] = token
 	}
 
-	jsonBody, err := json.Marshal(map[string]interface{}{
-		"body": data,
-	})
+	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		apiLog.Fatalf("Error marshalling JSON request body: %s", err.Error())
 	}
