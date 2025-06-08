@@ -29,7 +29,7 @@ var token = ""
 func getPlants() []plantInfo {
 	apiLog.Info("Querying plant information …")
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"page":      1,
 		"page_size": 100,
 	}
@@ -43,7 +43,7 @@ func getPlants() []plantInfo {
 func getPlantData(plantId float64) plantData {
 	apiLog.Infof("Querying data for plant ID %0.f …", plantId)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"sid": plantId,
 	}
 
@@ -64,7 +64,7 @@ func login(username string, password string) error {
 
 	sha256Password := sha256.Sum256([]byte(password))
 	encPassword := fmt.Sprintf("%x", md5.Sum([]byte(password))) + "." + base64.StdEncoding.EncodeToString(sha256Password[:])
-	data := map[string]interface{}{
+	data := map[string]any{
 		"password":  encPassword,
 		"user_name": username,
 	}
@@ -76,7 +76,7 @@ func login(username string, password string) error {
 		return err
 	}
 
-	loginToken, ok := res.Data.(map[string]interface{})
+	loginToken, ok := res.Data.(map[string]any)
 	if !ok {
 		apiLog.Errorf("Failed to parse login token for user '%s'.", username)
 		return fmt.Errorf("failed to parse login token for user '%s'", username)
@@ -93,7 +93,7 @@ func login(username string, password string) error {
 	return nil
 }
 
-func post[T response](path string, data map[string]interface{}, result *T) (*T, error) {
+func post[T response](path string, data map[string]any, result *T) (*T, error) {
 	headers := map[string]string{}
 	if path != LoginPath {
 		headers["Authorization"] = token
