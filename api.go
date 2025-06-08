@@ -162,7 +162,7 @@ func post[T response](path string, data map[string]interface{}, result *T) (*T, 
 	case "0":
 		break
 	case "1":
-		return nil, fmt.Errorf(msg)
+		return nil, fmt.Errorf("%s", msg)
 	case "100":
 		token = ""
 		apiLog.Debug("Token invalidated")
