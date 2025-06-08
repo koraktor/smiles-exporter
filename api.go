@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap/zapcore"
 )
 
 const BaseUrl = "https://neapi.hoymiles.com/"
@@ -102,7 +104,16 @@ func post[T response](path string, data map[string]interface{}, result *T) (*T, 
 		apiLog.Fatalf("Error marshalling JSON request body: %s", err.Error())
 	}
 
-	apiLog.Debugf("-> %s", jsonBody)
+	if apiLog.Level().Enabled(zapcore.DebugLevel) {
+		redactedData := data
+		if _, exists := redactedData["password"]; exists {
+			redactedData["password"] = "[REDACTED]"
+		}
+		redactedJsonBody, _ := json.Marshal(redactedData)
+
+		apiLog.Debugf("-> %s", redactedJsonBody)
+	}
+
 	httpLog.Debugf("-> %s (%d bytes)", path, len(jsonBody))
 
 	bodyReader := bytes.NewReader(jsonBody)
