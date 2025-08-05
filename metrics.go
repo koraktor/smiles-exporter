@@ -54,19 +54,24 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 	collectorLog.Debug("Collecting metrics …")
 
 	err := login(*username, *password)
-	if err == nil {
-		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 1)
-	} else {
+	if err != nil {
 		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 0)
 		return
 	}
 
 	plantInfo := getPlants()
+	var plantError = false
 
 	for _, plant := range plantInfo {
 		collectorLog.Debugf("Building metrics for plant ID %0.f …", plant.Id)
 
-		plantData := getPlantData(plant.Id)
+		plantData, err := getPlantData(plant.Id)
+		if err != nil {
+			collectorLog.Errorf("Failed to get data for plant ID %0.f: %s", plant.Id, err)
+			plantError = true
+
+			continue
+		}
 
 		energyToday, _ := strconv.ParseFloat(plantData.Data.EnergyToday, 64)
 		energyTotal, _ := strconv.ParseFloat(plantData.Data.EnergyTotal, 64)
@@ -93,6 +98,12 @@ func (m metrics) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(m.plantInfo, prometheus.GaugeValue, 1, fmt.Sprintf("%.0f", plant.Id), plant.Name, fmt.Sprintf("%.0f", maxPower))
 		ch <- prometheus.MustNewConstMetric(m.plantLastUpdate, prometheus.CounterValue, float64(lastUpdate.UTC().Unix()), fmt.Sprintf("%.0f", plant.Id))
 		ch <- prometheus.MustNewConstMetric(m.plantPower, prometheus.GaugeValue, plantPower, fmt.Sprintf("%.0f", plant.Id))
+	}
+
+	if plantError {
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 0)
+	} else {
+		ch <- prometheus.MustNewConstMetric(m.up, prometheus.GaugeValue, 1)
 	}
 }
 

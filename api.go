@@ -40,7 +40,7 @@ func getPlants() []plantInfo {
 	return res.Data.List
 }
 
-func getPlantData(plantId float64) plantData {
+func getPlantData(plantId float64) (*plantData, error) {
 	apiLog.Infof("Querying data for plant ID %0.f …", plantId)
 
 	data := map[string]any{
@@ -48,9 +48,9 @@ func getPlantData(plantId float64) plantData {
 	}
 
 	var result *plantData
-	res, _ := post(PvmStationDataPath, data, result)
+	res, err := post(PvmStationDataPath, data, result)
 
-	return *res
+	return res, err
 }
 
 func login(username string, password string) error {
